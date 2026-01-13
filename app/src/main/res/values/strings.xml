@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hoof Direct</string>
+
+    <!-- Authentication -->
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Create Account</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="remember_me">Remember Me</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="terms_agreement">I agree to the Terms of Service and Privacy Policy</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+    <string name="dont_have_account">Don\'t have an account? Create one</string>
+    <string name="use_biometric">Use fingerprint or face to sign in</string>
+
+    <!-- Email Verification -->
+    <string name="verify_email">Verify Your Email</string>
+    <string name="verification_sent">We\'ve sent a verification email to</string>
+    <string name="resend_email">Resend Email</string>
+    <string name="resend_in">Resend in %1$ds</string>
+    <string name="open_email_app">Open Email App</string>
+    <string name="continue_without_verifying">Continue without verifying</string>
+
+    <!-- Password Validation -->
+    <string name="password_min_length">Password must be at least 8 characters</string>
+    <string name="password_uppercase">Password must contain an uppercase letter</string>
+    <string name="password_lowercase">Password must contain a lowercase letter</string>
+    <string name="password_number">Password must contain a number</string>
+    <string name="passwords_dont_match">Passwords do not match</string>
+    <string name="password_strength_weak">Weak</string>
+    <string name="password_strength_fair">Fair</string>
+    <string name="password_strength_good">Good</string>
+    <string name="password_strength_strong">Strong</string>
+
+    <!-- Errors -->
+    <string name="error_invalid_email">Please enter a valid email address</string>
+    <string name="error_invalid_credentials">Invalid email or password</string>
+    <string name="error_email_not_verified">Please verify your email before signing in</string>
+    <string name="error_email_already_registered">This email is already registered. Try signing in instead.</string>
+    <string name="error_account_locked">Too many failed attempts. Try again in %1$d minutes.</string>
+    <string name="error_network">Unable to connect. Check your internet connection and try again.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_must_accept_terms">You must accept the Terms of Service</string>
+
+    <!-- Profile Setup -->
+    <string name="profile_setup">Set Up Your Profile</string>
+    <string name="business_name">Business Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="home_address">Home Address</string>
+    <string name="service_radius">Service Radius</string>
+    <string name="default_duration">Default Appointment Duration</string>
+    <string name="default_cycle">Default Shoeing Cycle</string>
+    <string name="working_hours">Working Hours</string>
+    <string name="save_profile">Save Profile</string>
+    <string name="miles">%1$d miles</string>
+    <string name="minutes">%1$d minutes</string>
+    <string name="weeks">%1$d weeks</string>
+
+    <!-- Navigation -->
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_clients">Clients</string>
+    <string name="nav_routes">Routes</string>
+    <string name="nav_invoices">Invoices</string>
+    <string name="nav_more">More</string>
+
+    <!-- Common Actions -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
+    <string name="back">Back</string>
+    <string name="loading">Loading…</string>
+</resources>
