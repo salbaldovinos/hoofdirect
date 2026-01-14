@@ -17,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,12 +48,20 @@ class AuthViewModel @Inject constructor(
 
     private fun checkExistingSession() {
         viewModelScope.launch {
-            authRepository.currentUser.collect { user ->
+            // Combine auth status from repository with user data
+            // isAuthenticated is tracked explicitly (true on sign-in, false on sign-out)
+            // currentUser provides the cached user data
+            combine(
+                authRepository.isAuthenticated,
+                authRepository.currentUser
+            ) { isAuth, user ->
+                Pair(isAuth, user)
+            }.collect { (isAuth, user) ->
                 _authState.update {
                     it.copy(
-                        isAuthenticated = user != null,
+                        isAuthenticated = isAuth,
                         hasCompletedProfile = user?.profileCompleted == true,
-                        user = user
+                        user = if (isAuth) user else null
                     )
                 }
             }
