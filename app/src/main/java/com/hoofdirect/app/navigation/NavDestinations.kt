@@ -27,6 +27,10 @@ sealed interface NavDestination {
     @Serializable
     data object ProfileSetup : NavDestination
 
+    // Onboarding flow
+    @Serializable
+    data object Onboarding : NavDestination
+
     // Main app with bottom navigation
     @Serializable
     data object MainApp : NavDestination

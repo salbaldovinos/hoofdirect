@@ -1,8 +1,12 @@
 package com.hoofdirect.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,20 +18,35 @@ import com.hoofdirect.app.feature.auth.ui.EmailVerificationScreen
 import com.hoofdirect.app.feature.auth.ui.ForgotPasswordScreen
 import com.hoofdirect.app.feature.auth.ui.ProfileSetupScreen
 import com.hoofdirect.app.feature.auth.ui.SignInScreen
+import com.hoofdirect.app.feature.onboarding.data.OnboardingPreferencesManager
+import com.hoofdirect.app.feature.onboarding.navigation.OnboardingNavHost
 import com.hoofdirect.app.ui.MainAppShell
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun HoofDirectNavHost(
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    onboardingPreferencesManager: OnboardingPreferencesManager
 ) {
     val authState by authViewModel.authState.collectAsState()
 
-    // Determine start destination based on auth state
+    // Track onboarding completion state
+    var isOnboardingComplete by remember { mutableStateOf<Boolean?>(null) }
+
+    // Check onboarding status on first composition
+    LaunchedEffect(authState.isAuthenticated) {
+        if (authState.isAuthenticated) {
+            isOnboardingComplete = onboardingPreferencesManager.isOnboardingComplete.first()
+        }
+    }
+
+    // Determine start destination based on auth state and onboarding completion
     val startDestination: Any = when {
-        authState.isAuthenticated && !authState.hasCompletedProfile -> NavDestination.ProfileSetup
-        authState.isAuthenticated -> NavDestination.MainApp
-        else -> NavDestination.SignIn
+        !authState.isAuthenticated -> NavDestination.SignIn
+        !authState.hasCompletedProfile -> NavDestination.ProfileSetup
+        isOnboardingComplete == false -> NavDestination.Onboarding
+        else -> NavDestination.MainApp
     }
 
     NavHost(
@@ -41,10 +60,12 @@ fun HoofDirectNavHost(
                     navController.navigate(NavDestination.ForgotPassword)
                 },
                 onSignInSuccess = { hasCompletedProfile ->
-                    val destination = if (hasCompletedProfile) {
-                        NavDestination.MainApp
-                    } else {
-                        NavDestination.ProfileSetup
+                    // After sign-in, check profile and onboarding status
+                    // The startDestination logic will handle routing to the correct screen
+                    val destination = when {
+                        !hasCompletedProfile -> NavDestination.ProfileSetup
+                        isOnboardingComplete == false -> NavDestination.Onboarding
+                        else -> NavDestination.MainApp
                     }
                     navController.navigate(destination) {
                         popUpTo(NavDestination.SignIn) { inclusive = true }
@@ -87,8 +108,20 @@ fun HoofDirectNavHost(
         composable<NavDestination.ProfileSetup> {
             ProfileSetupScreen(
                 onProfileComplete = {
-                    navController.navigate(NavDestination.MainApp) {
+                    // After profile setup, go to onboarding
+                    navController.navigate(NavDestination.Onboarding) {
                         popUpTo(NavDestination.ProfileSetup) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Onboarding flow
+        composable<NavDestination.Onboarding> {
+            OnboardingNavHost(
+                onOnboardingComplete = {
+                    navController.navigate(NavDestination.MainApp) {
+                        popUpTo(NavDestination.Onboarding) { inclusive = true }
                     }
                 }
             )
