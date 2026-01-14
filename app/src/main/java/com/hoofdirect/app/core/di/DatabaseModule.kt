@@ -8,6 +8,7 @@ import com.hoofdirect.app.core.database.dao.ClientDao
 import com.hoofdirect.app.core.database.dao.HorseDao
 import com.hoofdirect.app.core.database.dao.InvoiceDao
 import com.hoofdirect.app.core.database.dao.MileageLogDao
+import com.hoofdirect.app.core.database.dao.RoutePlanDao
 import com.hoofdirect.app.core.database.dao.ServicePriceDao
 import com.hoofdirect.app.core.database.dao.SmsUsageDao
 import com.hoofdirect.app.core.database.dao.SyncQueueDao
@@ -35,7 +36,8 @@ object DatabaseModule {
         )
             .addMigrations(
                 HoofDirectDatabase.MIGRATION_1_2,
-                HoofDirectDatabase.MIGRATION_2_3
+                HoofDirectDatabase.MIGRATION_2_3,
+                HoofDirectDatabase.MIGRATION_3_4
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -93,5 +95,11 @@ object DatabaseModule {
     @Singleton
     fun provideSmsUsageDao(database: HoofDirectDatabase): SmsUsageDao {
         return database.smsUsageDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoutePlanDao(database: HoofDirectDatabase): RoutePlanDao {
+        return database.routePlanDao()
     }
 }

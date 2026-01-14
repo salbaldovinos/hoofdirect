@@ -505,6 +505,8 @@ When implementing features, respect subscription tier limits:
 | FRD-018 | Reporting | `feature/reports/`, `ReportsScreen.kt` |
 | FRD-019 | Settings | `feature/settings/`, `UserPreferencesManager.kt` |
 | FRD-020 | Onboarding | `feature/onboarding/`, `OnboardingNavHost.kt` |
+| FRD-009 | Maps | `feature/route/ui/MapScreen.kt`, `NavigationHelper.kt` |
+| FRD-010 | Route Optimization | `core/route/`, `feature/route/`, `RouteOptimizer.kt` |
 
 ### Not Yet Implemented
 
@@ -512,13 +514,11 @@ When implementing features, respect subscription tier limits:
 |-----|---------|----------|--------------|
 | FRD-007 | Calendar Sync | Medium | Google Calendar API |
 | FRD-008 | Reminders | High | Push notifications, SMS provider |
-| FRD-009 | Maps | High | Google Maps SDK |
-| FRD-010 | Route Optimization | **Critical** | Maps (FRD-009) |
 | FRD-014 | Payment Preferences | Low | Invoicing complete |
 | FRD-021 | Play Store Launch | Final | All features complete |
 
 ### Next Priority Features
 
-1. **FRD-009 Maps + FRD-010 Route Optimization** - Core differentiator
-2. **FRD-008 Reminders** - Key engagement feature
-3. **FRD-007 Calendar Sync** - External calendar integration
+1. **FRD-008 Reminders** - Key engagement feature
+2. **FRD-007 Calendar Sync** - External calendar integration
+3. **FRD-014 Payment Preferences** - Client payment method storage

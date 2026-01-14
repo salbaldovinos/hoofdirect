@@ -10,6 +10,7 @@ import com.hoofdirect.app.core.database.dao.ClientDao
 import com.hoofdirect.app.core.database.dao.HorseDao
 import com.hoofdirect.app.core.database.dao.InvoiceDao
 import com.hoofdirect.app.core.database.dao.MileageLogDao
+import com.hoofdirect.app.core.database.dao.RoutePlanDao
 import com.hoofdirect.app.core.database.dao.ServicePriceDao
 import com.hoofdirect.app.core.database.dao.SmsUsageDao
 import com.hoofdirect.app.core.database.dao.SyncQueueDao
@@ -21,6 +22,7 @@ import com.hoofdirect.app.core.database.entity.HorseEntity
 import com.hoofdirect.app.core.database.entity.InvoiceEntity
 import com.hoofdirect.app.core.database.entity.InvoiceItemEntity
 import com.hoofdirect.app.core.database.entity.MileageLogEntity
+import com.hoofdirect.app.core.database.entity.RoutePlanEntity
 import com.hoofdirect.app.core.database.entity.ServicePriceEntity
 import com.hoofdirect.app.core.database.entity.SmsUsageEntity
 import com.hoofdirect.app.core.database.entity.SyncQueueEntity
@@ -38,9 +40,10 @@ import com.hoofdirect.app.core.database.entity.UserEntity
         ServicePriceEntity::class,
         SyncQueueEntity::class,
         MileageLogEntity::class,
-        SmsUsageEntity::class
+        SmsUsageEntity::class,
+        RoutePlanEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -55,6 +58,7 @@ abstract class HoofDirectDatabase : RoomDatabase() {
     abstract fun syncQueueDao(): SyncQueueDao
     abstract fun mileageLogDao(): MileageLogDao
     abstract fun smsUsageDao(): SmsUsageDao
+    abstract fun routePlanDao(): RoutePlanDao
 
     companion object {
         const val DATABASE_NAME = "hoof_direct_db"
@@ -123,6 +127,39 @@ abstract class HoofDirectDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_sms_usage_user_id ON sms_usage(user_id)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_sms_usage_year_month ON sms_usage(year_month)")
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_sms_usage_user_id_year_month ON sms_usage(user_id, year_month)")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Create route_plans table for route optimization
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS route_plans (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        user_id TEXT NOT NULL,
+                        date TEXT NOT NULL,
+                        start_lat REAL NOT NULL,
+                        start_lng REAL NOT NULL,
+                        start_name TEXT NOT NULL,
+                        end_lat REAL NOT NULL,
+                        end_lng REAL NOT NULL,
+                        end_name TEXT NOT NULL,
+                        stops TEXT NOT NULL,
+                        polyline_points TEXT,
+                        total_distance_miles REAL NOT NULL,
+                        total_drive_minutes INTEGER NOT NULL,
+                        original_distance_miles REAL,
+                        original_drive_minutes INTEGER,
+                        optimized_at INTEGER NOT NULL,
+                        is_manually_reordered INTEGER NOT NULL DEFAULT 0,
+                        created_at INTEGER NOT NULL,
+                        updated_at INTEGER NOT NULL,
+                        sync_status TEXT NOT NULL DEFAULT 'SYNCED'
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_route_plans_user_id ON route_plans(user_id)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_route_plans_date ON route_plans(date)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_route_plans_user_id_date ON route_plans(user_id, date)")
             }
         }
     }

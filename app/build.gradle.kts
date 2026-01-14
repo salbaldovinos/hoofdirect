@@ -45,6 +45,13 @@ android {
         // Google Maps API Key (loaded from manifest)
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
             localProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
+
+        // Google Routes API Key (for route optimization)
+        buildConfigField(
+            "String",
+            "GOOGLE_ROUTES_API_KEY",
+            "\"${localProperties.getProperty("GOOGLE_ROUTES_API_KEY", localProperties.getProperty("GOOGLE_MAPS_API_KEY", ""))}\""
+        )
     }
 
     buildTypes {
