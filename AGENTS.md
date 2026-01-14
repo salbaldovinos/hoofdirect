@@ -504,6 +504,7 @@ When implementing features, respect subscription tier limits:
 | FRD-017 | Usage Limits | `UsageLimitsManager.kt`, `TierLimits.kt` |
 | FRD-018 | Reporting | `feature/reports/`, `ReportsScreen.kt` |
 | FRD-019 | Settings | `feature/settings/`, `UserPreferencesManager.kt` |
+| FRD-020 | Onboarding | `feature/onboarding/`, `OnboardingNavHost.kt` |
 
 ### Not Yet Implemented
 
@@ -514,11 +515,10 @@ When implementing features, respect subscription tier limits:
 | FRD-009 | Maps | High | Google Maps SDK |
 | FRD-010 | Route Optimization | **Critical** | Maps (FRD-009) |
 | FRD-014 | Payment Preferences | Low | Invoicing complete |
-| FRD-020 | Onboarding | High | Core features complete |
 | FRD-021 | Play Store Launch | Final | All features complete |
 
 ### Next Priority Features
 
-1. **FRD-020 Onboarding** - Critical for user activation
-2. **FRD-009 Maps + FRD-010 Route Optimization** - Core differentiator
-3. **FRD-008 Reminders** - Key engagement feature
+1. **FRD-009 Maps + FRD-010 Route Optimization** - Core differentiator
+2. **FRD-008 Reminders** - Key engagement feature
+3. **FRD-007 Calendar Sync** - External calendar integration

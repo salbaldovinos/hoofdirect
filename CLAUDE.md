@@ -28,6 +28,8 @@ This document provides specific instructions for Claude when working on the Hoof
 
 The project has comprehensive PRDs (Product Requirements Documents) and FRDs (Functional Requirements Documents). **Always read the relevant documents before implementing features.**
 
+**Important:** Also read and update `AGENTS.md` when completing features. This file tracks implementation status and provides patterns for AI agents.
+
 ```
 /mnt/project/00-PRD-INDEX.md    # PRD overview and phases
 /mnt/project/00-FRD-INDEX.md    # FRD overview and tech specs
@@ -379,26 +381,25 @@ class ClientRepositoryTest {
 | Usage Limits | PRD-017 | FRD-017 | ✅ Complete |
 | Reporting | PRD-018 | FRD-018 | ✅ Complete |
 | Settings | PRD-019 | FRD-019 | ✅ Complete |
-| Onboarding | PRD-020 | FRD-020 | ⏳ Not Started |
+| Onboarding | PRD-020 | FRD-020 | ✅ Complete |
 | Play Store Launch | PRD-021 | FRD-021 | ⏳ Not Started |
 
 ### Implementation Progress Summary
 
-**Completed (14/21):**
+**Completed (15/21):**
 - Phase 1: Authentication, Offline Sync, Clients, Horses
 - Phase 2: Appointments, Calendar
 - Phase 3: Mileage
 - Phase 4: Service Prices, Invoicing
 - Phase 5: Subscriptions, Usage Limits
-- Phase 6: Reporting, Settings
+- Phase 6: Reporting, Settings, Onboarding
 
-**Remaining (7/21):**
+**Remaining (6/21):**
 - Calendar Sync (FRD-007) - External calendar integration
 - Reminders (FRD-008) - Push notifications & SMS
 - Maps (FRD-009) - Google Maps integration
 - Route Optimization (FRD-010) - Core differentiator feature
 - Payment Preferences (FRD-014) - Client payment methods
-- Onboarding (FRD-020) - New user flow
 - Play Store Launch (FRD-021) - Release preparation
 
 ---
