@@ -21,6 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -67,6 +68,15 @@ class GoogleRoutesService @Inject constructor(
         departureTime: LocalDateTime
     ): Result<OptimizationResult> = withContext(Dispatchers.IO) {
         try {
+            // Ensure departure time is in the future (Google Routes API requirement)
+            val now = LocalDateTime.now()
+            val effectiveDepartureTime = if (departureTime.isBefore(now)) {
+                // Use current time plus 1 minute if the requested time is in the past
+                now.plusMinutes(1)
+            } else {
+                departureTime
+            }
+
             val requestBody = buildJsonObject {
                 putJsonObject("origin") {
                     putJsonObject("location") {
@@ -98,7 +108,7 @@ class GoogleRoutesService @Inject constructor(
                 }
                 put("travelMode", "DRIVE")
                 put("optimizeWaypointOrder", true)
-                put("departureTime", departureTime.toInstant(ZoneOffset.UTC).toString())
+                put("departureTime", effectiveDepartureTime.atZone(ZoneId.systemDefault()).toInstant().toString())
                 put("routingPreference", "TRAFFIC_AWARE")
                 put("computeAlternativeRoutes", false)
                 put("languageCode", "en-US")

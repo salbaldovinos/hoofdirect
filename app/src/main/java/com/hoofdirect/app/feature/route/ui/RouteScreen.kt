@@ -72,6 +72,11 @@ fun RouteScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    // Refresh data when screen becomes visible
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     // Show error messages
     LaunchedEffect(uiState.routeState) {
         if (uiState.routeState is RouteState.Error) {
@@ -133,6 +138,16 @@ fun RouteScreen(
                         message = "No appointments scheduled for ${viewModel.getFormattedDate()}. Add appointments to optimize your route.",
                         actionLabel = "Go to Schedule",
                         onAction = onNavigateToSchedule
+                    )
+                }
+
+                is RouteState.NoLocationData -> {
+                    EmptyState(
+                        icon = Icons.Default.Route,
+                        title = "Missing location data",
+                        message = "You have ${routeState.appointmentCount} appointment${if (routeState.appointmentCount != 1) "s" else ""} but none have location data. Edit your clients to add their addresses with GPS coordinates.",
+                        actionLabel = "Go to Clients",
+                        onAction = onNavigateToSchedule // TODO: Navigate to Clients instead
                     )
                 }
 

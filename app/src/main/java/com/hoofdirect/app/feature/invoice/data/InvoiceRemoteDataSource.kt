@@ -7,6 +7,8 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,9 +22,9 @@ data class InvoiceDto(
     val status: String = "DRAFT",
     val invoice_date: String,
     val due_date: String,
-    val subtotal: String = "0.00",
-    val tax: String = "0.00",
-    val total: String = "0.00",
+    val subtotal: Double = 0.0,  // Supabase returns numeric as Double
+    val tax: Double = 0.0,
+    val total: Double = 0.0,
     val notes: String? = null,
     val payment_method: String? = null,
     val paid_at: String? = null,
@@ -40,20 +42,32 @@ data class InvoiceDto(
         status = status,
         invoiceDate = LocalDate.parse(invoice_date),
         dueDate = LocalDate.parse(due_date),
-        subtotal = subtotal,
-        tax = tax,
-        total = total,
+        subtotal = "%.2f".format(subtotal),
+        tax = "%.2f".format(tax),
+        total = "%.2f".format(total),
         notes = notes,
         paymentMethod = payment_method,
-        paidAt = paid_at?.let { Instant.parse(it) },
-        sentAt = sent_at?.let { Instant.parse(it) },
+        paidAt = paid_at?.let { parseSupabaseTimestamp(it) },
+        sentAt = sent_at?.let { parseSupabaseTimestamp(it) },
         pdfPath = pdf_path,
-        createdAt = created_at?.let { Instant.parse(it) } ?: Instant.now(),
-        updatedAt = updated_at?.let { Instant.parse(it) } ?: Instant.now(),
+        createdAt = created_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
+        updatedAt = updated_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
         syncStatus = "SYNCED"
     )
 
     companion object {
+        private fun parseSupabaseTimestamp(timestamp: String): Instant {
+            return try {
+                Instant.parse(timestamp)
+            } catch (e: DateTimeParseException) {
+                try {
+                    OffsetDateTime.parse(timestamp).toInstant()
+                } catch (e2: DateTimeParseException) {
+                    Instant.now()
+                }
+            }
+        }
+
         fun fromEntity(entity: InvoiceEntity): InvoiceDto = InvoiceDto(
             id = entity.id,
             user_id = entity.userId,
@@ -63,9 +77,9 @@ data class InvoiceDto(
             status = entity.status,
             invoice_date = entity.invoiceDate.toString(),
             due_date = entity.dueDate.toString(),
-            subtotal = entity.subtotal,
-            tax = entity.tax,
-            total = entity.total,
+            subtotal = entity.subtotal.toDoubleOrNull() ?: 0.0,
+            tax = entity.tax.toDoubleOrNull() ?: 0.0,
+            total = entity.total.toDoubleOrNull() ?: 0.0,
             notes = entity.notes,
             payment_method = entity.paymentMethod,
             paid_at = entity.paidAt?.toString(),
@@ -85,8 +99,8 @@ data class InvoiceItemDto(
     val service_type: String,
     val description: String? = null,
     val quantity: Int = 1,
-    val unit_price: String,
-    val total: String
+    val unit_price: Double,  // Supabase returns numeric as Double
+    val total: Double
 ) {
     fun toEntity(): InvoiceItemEntity = InvoiceItemEntity(
         id = id,
@@ -95,8 +109,8 @@ data class InvoiceItemDto(
         serviceType = service_type,
         description = description,
         quantity = quantity,
-        unitPrice = unit_price,
-        total = total
+        unitPrice = "%.2f".format(unit_price),
+        total = "%.2f".format(total)
     )
 
     companion object {
@@ -107,8 +121,8 @@ data class InvoiceItemDto(
             service_type = entity.serviceType,
             description = entity.description,
             quantity = entity.quantity,
-            unit_price = entity.unitPrice,
-            total = entity.total
+            unit_price = entity.unitPrice.toDoubleOrNull() ?: 0.0,
+            total = entity.total.toDoubleOrNull() ?: 0.0
         )
     }
 }

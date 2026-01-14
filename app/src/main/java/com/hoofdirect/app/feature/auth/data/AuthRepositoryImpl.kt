@@ -11,11 +11,14 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import javax.inject.Inject
@@ -68,8 +71,17 @@ class AuthRepositoryImpl @Inject constructor(
 
     private val auth: Auth get() = supabaseClient.auth
 
-    // Track auth state explicitly - initialized based on whether we have a valid session
-    private val _isAuthenticated = MutableStateFlow(hasValidSession())
+    // Track auth state explicitly - start as false, will be updated after lazy session check
+    // Avoid calling hasValidSession() here as it triggers slow EncryptedSharedPreferences init
+    private val _isAuthenticated = MutableStateFlow(false)
+
+    init {
+        // Defer session check to avoid blocking DI construction on main thread
+        CoroutineScope(Dispatchers.IO).launch {
+            val hasSession = hasValidSession()
+            _isAuthenticated.value = hasSession
+        }
+    }
 
     override val currentUser: Flow<User?> = userDao.getCurrentUser()
         .map { entity -> entity?.let { User.fromEntity(it) } }

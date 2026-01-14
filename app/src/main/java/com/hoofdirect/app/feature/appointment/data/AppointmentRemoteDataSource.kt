@@ -4,12 +4,18 @@ import com.hoofdirect.app.core.database.entity.AppointmentEntity
 import com.hoofdirect.app.core.database.entity.AppointmentHorseEntity
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import android.util.Log
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "AppointmentRemoteDS"
 
 @Serializable
 data class AppointmentDto(
@@ -25,7 +31,7 @@ data class AppointmentDto(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val notes: String? = null,
-    val total_price: String = "0.00",
+    val total_price: Double = 0.0,  // Supabase returns numeric as Double
     val reminder_sent: Boolean = false,
     val confirmation_received: Boolean = false,
     val completed_at: String? = null,
@@ -50,21 +56,42 @@ data class AppointmentDto(
         latitude = latitude,
         longitude = longitude,
         notes = notes,
-        totalPrice = total_price,
+        totalPrice = "%.2f".format(total_price),  // Convert Double to String
         reminderSent = reminder_sent,
         confirmationReceived = confirmation_received,
-        completedAt = completed_at?.let { Instant.parse(it) },
-        cancelledAt = cancelled_at?.let { Instant.parse(it) },
+        completedAt = completed_at?.let { parseSupabaseTimestamp(it) },
+        cancelledAt = cancelled_at?.let { parseSupabaseTimestamp(it) },
         cancellationReason = cancellation_reason,
         routeOrder = route_order,
         travelTimeMinutes = travel_time_minutes,
         travelDistanceMiles = travel_distance_miles,
-        createdAt = created_at?.let { Instant.parse(it) } ?: Instant.now(),
-        updatedAt = updated_at?.let { Instant.parse(it) } ?: Instant.now(),
+        createdAt = created_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
+        updatedAt = updated_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
         syncStatus = "SYNCED"
     )
 
     companion object {
+        /**
+         * Parse timestamp from Supabase which can be in various formats:
+         * - ISO-8601 with Z suffix: 2024-01-13T10:30:00Z
+         * - ISO-8601 with offset: 2024-01-13T10:30:00+00:00
+         * - ISO-8601 with microseconds: 2024-01-13T10:30:00.000000+00:00
+         */
+        private fun parseSupabaseTimestamp(timestamp: String): Instant {
+            return try {
+                // Try standard Instant.parse first (handles Z suffix)
+                Instant.parse(timestamp)
+            } catch (e: DateTimeParseException) {
+                try {
+                    // Try parsing as OffsetDateTime (handles +00:00 format)
+                    OffsetDateTime.parse(timestamp).toInstant()
+                } catch (e2: DateTimeParseException) {
+                    // Fallback: current time
+                    Instant.now()
+                }
+            }
+        }
+
         fun fromEntity(entity: AppointmentEntity): AppointmentDto = AppointmentDto(
             id = entity.id,
             user_id = entity.userId,
@@ -78,7 +105,7 @@ data class AppointmentDto(
             latitude = entity.latitude,
             longitude = entity.longitude,
             notes = entity.notes,
-            total_price = entity.totalPrice,
+            total_price = entity.totalPrice.toDoubleOrNull() ?: 0.0,
             reminder_sent = entity.reminderSent,
             confirmation_received = entity.confirmationReceived,
             completed_at = entity.completedAt?.toString(),
@@ -98,7 +125,7 @@ data class AppointmentHorseDto(
     val appointment_id: String,
     val horse_id: String,
     val service_type: String,
-    val price: String = "0.00",
+    val price: Double = 0.0,  // Supabase returns numeric as Double
     val notes: String? = null,
     val created_at: String? = null
 ) {
@@ -106,17 +133,29 @@ data class AppointmentHorseDto(
         appointmentId = appointment_id,
         horseId = horse_id,
         serviceType = service_type,
-        price = price,
+        price = "%.2f".format(price),  // Convert Double to String
         notes = notes,
-        createdAt = created_at?.let { Instant.parse(it) } ?: Instant.now()
+        createdAt = created_at?.let { parseTimestamp(it) } ?: Instant.now()
     )
+
+    private fun parseTimestamp(timestamp: String): Instant {
+        return try {
+            Instant.parse(timestamp)
+        } catch (e: DateTimeParseException) {
+            try {
+                OffsetDateTime.parse(timestamp).toInstant()
+            } catch (e2: DateTimeParseException) {
+                Instant.now()
+            }
+        }
+    }
 
     companion object {
         fun fromEntity(entity: AppointmentHorseEntity): AppointmentHorseDto = AppointmentHorseDto(
             appointment_id = entity.appointmentId,
             horse_id = entity.horseId,
             service_type = entity.serviceType,
-            price = entity.price,
+            price = entity.price.toDoubleOrNull() ?: 0.0,
             notes = entity.notes,
             created_at = entity.createdAt.toString()
         )
@@ -132,6 +171,7 @@ class AppointmentRemoteDataSource @Inject constructor(
 
     suspend fun fetchAllAppointments(userId: String): Result<List<AppointmentEntity>> {
         return try {
+            Log.d(TAG, "Fetching appointments for user: $userId")
             val response = supabaseClient.postgrest[appointmentsTable]
                 .select {
                     filter {
@@ -140,8 +180,13 @@ class AppointmentRemoteDataSource @Inject constructor(
                 }
                 .decodeList<AppointmentDto>()
 
+            Log.d(TAG, "Fetched ${response.size} appointments from Supabase")
+            response.forEach { dto ->
+                Log.d(TAG, "Appointment: id=${dto.id}, client_id=${dto.client_id}, date=${dto.date}")
+            }
             Result.success(response.map { it.toEntity() })
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching appointments: ${e.message}", e)
             Result.failure(e)
         }
     }

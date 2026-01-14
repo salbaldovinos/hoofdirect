@@ -47,6 +47,7 @@ data class AppointmentFormUiState(
     val formState: AppointmentFormState = AppointmentFormState(),
     val isEditMode: Boolean = false,
     val appointmentId: String? = null,
+    val originalAppointment: AppointmentEntity? = null, // Preserve original for editing
     val selectedClient: ClientEntity? = null,
     val availableClients: List<ClientEntity> = emptyList(),
     val horseServices: List<HorseServiceItem> = emptyList(),
@@ -134,6 +135,7 @@ class AppointmentFormViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
+                        originalAppointment = appointment, // Save original for editing
                         selectedClient = client,
                         formState = AppointmentFormState(
                             date = appointment.date,
@@ -311,19 +313,38 @@ class AppointmentFormViewModel @Inject constructor(
 
             val appointmentIdToUse = appointmentId ?: UUID.randomUUID().toString()
 
-            val appointment = AppointmentEntity(
-                id = appointmentIdToUse,
-                userId = userId,
-                clientId = client.id,
-                date = state.formState.date,
-                startTime = state.formState.startTime,
-                durationMinutes = state.formState.durationMinutes,
-                notes = state.formState.notes.ifBlank { null },
-                address = state.formState.address.ifBlank { client.address },
-                latitude = client.latitude,
-                longitude = client.longitude,
-                totalPrice = state.totalPrice
-            )
+            // When editing, preserve original appointment data; when creating, use defaults
+            val originalAppointment = state.originalAppointment
+            val appointment = if (isEditMode && originalAppointment != null) {
+                // Preserve existing fields, only update editable ones
+                originalAppointment.copy(
+                    clientId = client.id,
+                    date = state.formState.date,
+                    startTime = state.formState.startTime,
+                    durationMinutes = state.formState.durationMinutes,
+                    notes = state.formState.notes.ifBlank { null },
+                    address = state.formState.address.ifBlank { client.address },
+                    latitude = client.latitude,
+                    longitude = client.longitude,
+                    totalPrice = state.totalPrice
+                    // status, createdAt, reminderSent, etc. are preserved from original
+                )
+            } else {
+                // Creating new appointment
+                AppointmentEntity(
+                    id = appointmentIdToUse,
+                    userId = userId,
+                    clientId = client.id,
+                    date = state.formState.date,
+                    startTime = state.formState.startTime,
+                    durationMinutes = state.formState.durationMinutes,
+                    notes = state.formState.notes.ifBlank { null },
+                    address = state.formState.address.ifBlank { client.address },
+                    latitude = client.latitude,
+                    longitude = client.longitude,
+                    totalPrice = state.totalPrice
+                )
+            }
 
             val appointmentHorses = state.horseServices
                 .filter { it.isSelected && it.serviceType.isNotBlank() }

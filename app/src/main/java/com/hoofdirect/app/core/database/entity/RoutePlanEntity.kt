@@ -2,11 +2,19 @@ package com.hoofdirect.app.core.database.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.Instant
 import java.time.LocalDate
 
-@Entity(tableName = "route_plans")
+@Entity(
+    tableName = "route_plans",
+    indices = [
+        Index(value = ["user_id"]),
+        Index(value = ["date"]),
+        Index(value = ["user_id", "date"], unique = true)
+    ]
+)
 data class RoutePlanEntity(
     @PrimaryKey
     val id: String,
@@ -57,7 +65,7 @@ data class RoutePlanEntity(
     @ColumnInfo(name = "optimized_at")
     val optimizedAt: Instant,
 
-    @ColumnInfo(name = "is_manually_reordered")
+    @ColumnInfo(name = "is_manually_reordered", defaultValue = "0")
     val isManuallyReordered: Boolean = false,
 
     @ColumnInfo(name = "created_at")
@@ -66,6 +74,6 @@ data class RoutePlanEntity(
     @ColumnInfo(name = "updated_at")
     val updatedAt: Instant = Instant.now(),
 
-    @ColumnInfo(name = "sync_status")
+    @ColumnInfo(name = "sync_status", defaultValue = "'SYNCED'")
     val syncStatus: String = "SYNCED"
 )

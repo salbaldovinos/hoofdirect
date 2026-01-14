@@ -522,3 +522,65 @@ When implementing features, respect subscription tier limits:
 1. **FRD-008 Reminders** - Key engagement feature
 2. **FRD-007 Calendar Sync** - External calendar integration
 3. **FRD-014 Payment Preferences** - Client payment method storage
+
+---
+
+## Recent Bug Fixes & Improvements (January 2026)
+
+### Data Sync Fixes
+
+| Issue | Fix | Files Modified |
+|-------|-----|----------------|
+| Appointments not syncing from Supabase | Fixed numeric type mismatch (`total_price` was returned as number, not string) | `AppointmentRemoteDataSource.kt` |
+| Invoice sync failing | Fixed numeric types for `subtotal`, `tax`, `total`, `unit_price` | `InvoiceRemoteDataSource.kt` |
+| Timestamp parsing errors | Added `parseSupabaseTimestamp()` to handle Supabase's offset format (`+00:00`) | All `*RemoteDataSource.kt` files |
+| Sync not triggered on login | Added `triggerSync()` in `MainAppViewModel.init()` | `MainAppViewModel.kt` |
+
+### Route Optimization Fixes
+
+| Issue | Fix | Files Modified |
+|-------|-----|----------------|
+| "Timestamp must be set to future time" error | Ensure departure time is always in the future when calling Google Routes API | `GoogleRoutesService.kt` |
+| Route not showing appointments | Added `NoLocationData` state when appointments lack GPS coordinates | `RouteViewModel.kt`, `RouteScreen.kt` |
+| Navigation to schedule not working | Fixed navigation callbacks in `MainAppShell.kt` | `MainAppShell.kt` |
+
+### Appointment Fixes
+
+| Issue | Fix | Files Modified |
+|-------|-----|----------------|
+| Editing resets appointment status | Preserve original appointment data when editing (status, createdAt, etc.) | `AppointmentFormViewModel.kt` |
+| No feedback on status changes | Added toast messages for Confirm, Start, Complete, Cancel actions | `AppointmentDetailViewModel.kt`, `AppointmentDetailScreen.kt` |
+
+### Startup & Performance Fixes
+
+| Issue | Fix | Files Modified |
+|-------|-----|----------------|
+| ANR on startup | Made `EncryptedSharedPreferences` lazy in `TokenManager` | `TokenManager.kt` |
+| ANR on startup | Deferred session check to background thread in `AuthRepositoryImpl` | `AuthRepositoryImpl.kt` |
+| Room migration error | Fixed `RoutePlanEntity` schema (added indices, default values) | `RoutePlanEntity.kt` |
+
+### New Features Added
+
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Geocoding Service | Convert addresses to GPS coordinates for route optimization | `core/location/GeocodingService.kt` |
+| Client address geocoding | Auto-geocode client addresses on save | `ClientFormViewModel.kt` |
+| Profile home location geocoding | Auto-geocode home address for route start/end | `ProfileViewModel.kt` |
+
+---
+
+## Known Issues & TODO
+
+### High Priority
+- [ ] Write unit tests for ViewModels
+- [ ] Write integration tests for repositories
+- [ ] Handle geocoding failures gracefully (show user message)
+
+### Medium Priority
+- [ ] Add loading indicator during geocoding
+- [ ] Cache geocoding results to reduce API calls
+- [ ] Handle offline geocoding (queue for when online)
+
+### Low Priority
+- [ ] Migrate deprecated Material 3 APIs (SearchBar, menuAnchor, etc.)
+- [ ] Add instrumented tests for database migrations

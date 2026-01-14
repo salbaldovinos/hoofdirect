@@ -61,6 +61,13 @@ class RoutePlanRepository @Inject constructor(
     }
 
     /**
+     * Get total appointment count for a date (regardless of location data).
+     */
+    suspend fun getAppointmentCountForDate(userId: String, date: LocalDate): Int {
+        return appointmentDao.getAppointmentsForDateOnce(userId, date).size
+    }
+
+    /**
      * Get appointments for a date that can be optimized.
      * Returns waypoints with location data.
      */

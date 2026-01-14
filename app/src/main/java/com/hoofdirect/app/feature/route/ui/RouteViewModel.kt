@@ -34,6 +34,7 @@ data class RouteUiState(
     val date: LocalDate = LocalDate.now(),
     val routeState: RouteState = RouteState.Loading,
     val appointmentCount: Int = 0,
+    val waypointCount: Int = 0, // Appointments with valid location data
     val lockedStops: Map<String, Int> = emptyMap(),
     val isRouteMode: Boolean = false,
     val currentStopIndex: Int = 0,
@@ -46,6 +47,7 @@ data class RouteUiState(
 sealed interface RouteState {
     data object Loading : RouteState
     data object NoAppointments : RouteState
+    data class NoLocationData(val appointmentCount: Int) : RouteState // Appointments exist but no locations
     data object NotOptimized : RouteState
     data object Optimizing : RouteState
     data class Optimized(val route: OptimizedRoute) : RouteState
@@ -93,6 +95,13 @@ class RouteViewModel @Inject constructor(
     }
 
     /**
+     * Refresh route data - call when screen becomes visible.
+     */
+    fun refresh() {
+        loadRoute()
+    }
+
+    /**
      * Load cached route or check for appointments.
      */
     private fun loadRoute() {
@@ -102,12 +111,25 @@ class RouteViewModel @Inject constructor(
 
             _uiState.update { it.copy(routeState = RouteState.Loading) }
 
-            // Get appointment count
+            // Get total appointment count and waypoints with valid locations
+            val totalAppointments = routePlanRepository.getAppointmentCountForDate(currentUserId, date)
             val waypoints = routePlanRepository.getWaypointsForDate(currentUserId, date)
-            _uiState.update { it.copy(appointmentCount = waypoints.size) }
+
+            _uiState.update {
+                it.copy(
+                    appointmentCount = totalAppointments,
+                    waypointCount = waypoints.size
+                )
+            }
+
+            if (totalAppointments == 0) {
+                _uiState.update { it.copy(routeState = RouteState.NoAppointments) }
+                return@launch
+            }
 
             if (waypoints.isEmpty()) {
-                _uiState.update { it.copy(routeState = RouteState.NoAppointments) }
+                // Appointments exist but none have location data
+                _uiState.update { it.copy(routeState = RouteState.NoLocationData(totalAppointments)) }
                 return@launch
             }
 

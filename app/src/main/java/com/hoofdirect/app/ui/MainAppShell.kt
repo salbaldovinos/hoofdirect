@@ -207,7 +207,20 @@ fun MainAppShell(
                     }
 
                     composable(BottomNavItem.Routes.route) {
-                        RouteScreen()
+                        RouteScreen(
+                            onNavigateToSchedule = {
+                                navController.navigate(BottomNavItem.Schedule.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            onNavigateToAppointment = { appointmentId ->
+                                navController.navigate("appointment/$appointmentId")
+                            }
+                        )
                     }
 
                     composable(BottomNavItem.Invoices.route) {

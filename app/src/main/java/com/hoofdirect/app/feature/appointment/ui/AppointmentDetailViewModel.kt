@@ -33,6 +33,7 @@ data class AppointmentDetailUiState(
     val isLoading: Boolean = true,
     val isProcessing: Boolean = false,
     val error: String? = null,
+    val successMessage: String? = null,
     val deleted: Boolean = false,
     val showCancelDialog: Boolean = false,
     val showDeleteDialog: Boolean = false
@@ -96,7 +97,9 @@ class AppointmentDetailViewModel @Inject constructor(
 
             appointmentRepository.updateStatus(appointmentId, AppointmentStatus.CONFIRMED)
                 .onSuccess {
-                    _uiState.update { it.copy(isProcessing = false) }
+                    _uiState.update {
+                        it.copy(isProcessing = false, successMessage = "Appointment confirmed")
+                    }
                 }
                 .onFailure { e ->
                     _uiState.update {
@@ -112,7 +115,9 @@ class AppointmentDetailViewModel @Inject constructor(
 
             appointmentRepository.updateStatus(appointmentId, AppointmentStatus.IN_PROGRESS)
                 .onSuccess {
-                    _uiState.update { it.copy(isProcessing = false) }
+                    _uiState.update {
+                        it.copy(isProcessing = false, successMessage = "Service started")
+                    }
                 }
                 .onFailure { e ->
                     _uiState.update {
@@ -130,7 +135,9 @@ class AppointmentDetailViewModel @Inject constructor(
 
             appointmentRepository.completeAppointment(appointmentId, defaultCycleWeeks)
                 .onSuccess {
-                    _uiState.update { it.copy(isProcessing = false) }
+                    _uiState.update {
+                        it.copy(isProcessing = false, successMessage = "Appointment completed")
+                    }
                 }
                 .onFailure { e ->
                     _uiState.update {
@@ -154,7 +161,9 @@ class AppointmentDetailViewModel @Inject constructor(
 
             appointmentRepository.cancelAppointment(appointmentId, reason)
                 .onSuccess {
-                    _uiState.update { it.copy(isProcessing = false) }
+                    _uiState.update {
+                        it.copy(isProcessing = false, successMessage = "Appointment cancelled")
+                    }
                 }
                 .onFailure { e ->
                     _uiState.update {
@@ -190,5 +199,9 @@ class AppointmentDetailViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
     }
 }

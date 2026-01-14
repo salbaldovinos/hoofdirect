@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hoofdirect.app.core.database.entity.ClientEntity
+import com.hoofdirect.app.core.location.GeocodingService
 import com.hoofdirect.app.feature.auth.data.TokenManager
 import com.hoofdirect.app.feature.client.data.ClientRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -71,7 +72,8 @@ data class ClientFormUiState(
 class ClientFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val clientRepository: ClientRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val geocodingService: GeocodingService
 ) : ViewModel() {
 
     private val clientId: String? = savedStateHandle.get<String>("clientId")?.takeIf { it.isNotBlank() }
@@ -281,7 +283,24 @@ class ClientFormViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
 
-            val formState = _uiState.value.formState
+            var formState = _uiState.value.formState
+
+            // Geocode address if we don't have coordinates but have an address
+            if (formState.address.isNotBlank() && (formState.latitude == null || formState.longitude == null)) {
+                val geocodingResult = geocodingService.geocodeAddress(formState.address)
+                if (geocodingResult != null) {
+                    formState = formState.copy(
+                        latitude = geocodingResult.latitude,
+                        longitude = geocodingResult.longitude,
+                        city = geocodingResult.city ?: formState.city,
+                        state = geocodingResult.state ?: formState.state,
+                        zipCode = geocodingResult.zipCode ?: formState.zipCode
+                    )
+                    // Update UI state with geocoded data
+                    _uiState.update { it.copy(formState = formState) }
+                }
+            }
+
             val client = ClientEntity(
                 id = clientId ?: UUID.randomUUID().toString(),
                 userId = userId,

@@ -81,6 +81,14 @@ fun AppointmentDetailScreen(
         }
     }
 
+    // Show success snackbar
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearSuccessMessage()
+        }
+    }
+
     // Cancel dialog
     if (uiState.showCancelDialog) {
         CancelAppointmentDialog(

@@ -2,6 +2,7 @@ package com.hoofdirect.app.feature.profile.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hoofdirect.app.core.location.GeocodingService
 import com.hoofdirect.app.feature.auth.data.AuthRepository
 import com.hoofdirect.app.feature.auth.domain.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,8 @@ data class ProfileUiState(
     val businessName: String = "",
     val phone: String = "",
     val address: String = "",
+    val homeLatitude: Double? = null,
+    val homeLongitude: Double? = null,
     val serviceRadiusMiles: Int = 50,
     val defaultDurationMinutes: Int = 45,
     val defaultCycleWeeks: Int = 6
@@ -30,7 +33,8 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val geocodingService: GeocodingService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -50,6 +54,8 @@ class ProfileViewModel @Inject constructor(
                         businessName = user?.businessName ?: "",
                         phone = user?.phone ?: "",
                         address = user?.address ?: "",
+                        homeLatitude = user?.homeLatitude,
+                        homeLongitude = user?.homeLongitude,
                         serviceRadiusMiles = user?.serviceRadiusMiles ?: 50,
                         defaultDurationMinutes = user?.defaultDurationMinutes ?: 45,
                         defaultCycleWeeks = user?.defaultCycleWeeks ?: 6
@@ -71,6 +77,8 @@ class ProfileViewModel @Inject constructor(
                 businessName = user?.businessName ?: "",
                 phone = user?.phone ?: "",
                 address = user?.address ?: "",
+                homeLatitude = user?.homeLatitude,
+                homeLongitude = user?.homeLongitude,
                 serviceRadiusMiles = user?.serviceRadiusMiles ?: 50,
                 defaultDurationMinutes = user?.defaultDurationMinutes ?: 45,
                 defaultCycleWeeks = user?.defaultCycleWeeks ?: 6
@@ -87,7 +95,14 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun updateAddress(value: String) {
-        _uiState.update { it.copy(address = value) }
+        _uiState.update {
+            it.copy(
+                address = value,
+                // Clear coordinates when address changes - will be re-geocoded on save
+                homeLatitude = null,
+                homeLongitude = null
+            )
+        }
     }
 
     fun updateServiceRadius(value: Int) {
@@ -109,10 +124,31 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
 
+            // Geocode address if we don't have coordinates but have an address
+            var homeLatitude = state.homeLatitude
+            var homeLongitude = state.homeLongitude
+
+            if (state.address.isNotBlank() && (homeLatitude == null || homeLongitude == null)) {
+                val geocodingResult = geocodingService.geocodeAddress(state.address)
+                if (geocodingResult != null) {
+                    homeLatitude = geocodingResult.latitude
+                    homeLongitude = geocodingResult.longitude
+                    // Update UI state with geocoded data
+                    _uiState.update {
+                        it.copy(
+                            homeLatitude = homeLatitude,
+                            homeLongitude = homeLongitude
+                        )
+                    }
+                }
+            }
+
             val updatedUser = currentUser.copy(
                 businessName = state.businessName.ifBlank { null },
                 phone = state.phone.ifBlank { null },
                 address = state.address.ifBlank { null },
+                homeLatitude = homeLatitude,
+                homeLongitude = homeLongitude,
                 serviceRadiusMiles = state.serviceRadiusMiles,
                 defaultDurationMinutes = state.defaultDurationMinutes,
                 defaultCycleWeeks = state.defaultCycleWeeks

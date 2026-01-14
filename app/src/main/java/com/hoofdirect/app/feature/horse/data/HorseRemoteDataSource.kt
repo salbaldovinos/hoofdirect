@@ -6,6 +6,8 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,12 +47,24 @@ data class HorseDto(
         medicalNotes = medical_notes,
         primaryPhotoId = primary_photo_id,
         isActive = is_active,
-        createdAt = created_at?.let { Instant.parse(it) } ?: Instant.now(),
-        updatedAt = updated_at?.let { Instant.parse(it) } ?: Instant.now(),
+        createdAt = created_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
+        updatedAt = updated_at?.let { parseSupabaseTimestamp(it) } ?: Instant.now(),
         syncStatus = "SYNCED"
     )
 
     companion object {
+        private fun parseSupabaseTimestamp(timestamp: String): Instant {
+            return try {
+                Instant.parse(timestamp)
+            } catch (e: DateTimeParseException) {
+                try {
+                    OffsetDateTime.parse(timestamp).toInstant()
+                } catch (e2: DateTimeParseException) {
+                    Instant.now()
+                }
+            }
+        }
+
         fun fromEntity(entity: HorseEntity): HorseDto = HorseDto(
             id = entity.id,
             user_id = entity.userId,

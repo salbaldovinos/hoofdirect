@@ -33,6 +33,8 @@ class MainAppViewModel @Inject constructor(
         observeNetworkState()
         observePendingChanges()
         scheduleSyncWork()
+        // Trigger immediate sync on startup to pull data from server
+        triggerSync()
     }
 
     private fun observeNetworkState() {

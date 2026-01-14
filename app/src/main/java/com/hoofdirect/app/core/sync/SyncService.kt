@@ -286,30 +286,45 @@ class SyncService @Inject constructor(
         val result = appointmentRemoteDataSource.fetchAllAppointments(userId)
         if (result.isSuccess) {
             val remoteAppointments = result.getOrDefault(emptyList())
+            Log.d(TAG, "Fetched ${remoteAppointments.size} appointments from remote")
             for (remoteAppointment in remoteAppointments) {
-                val localAppointment = appointmentDao.getAppointmentByIdOnce(remoteAppointment.id)
+                try {
+                    val localAppointment = appointmentDao.getAppointmentByIdOnce(remoteAppointment.id)
 
-                if (localAppointment == null) {
-                    appointmentDao.insert(remoteAppointment)
-                    // Also pull the appointment horses
-                    val horsesResult = appointmentRemoteDataSource.fetchAppointmentHorses(remoteAppointment.id)
-                    if (horsesResult.isSuccess) {
-                        appointmentDao.insertAppointmentHorses(horsesResult.getOrDefault(emptyList()))
-                    }
-                    count++
-                } else if (localAppointment.syncStatus == EntitySyncStatus.SYNCED.name) {
-                    if (remoteAppointment.updatedAt > localAppointment.updatedAt) {
-                        appointmentDao.update(remoteAppointment)
-                        // Update appointment horses
-                        appointmentDao.deleteAppointmentHorses(remoteAppointment.id)
+                    if (localAppointment == null) {
+                        // Check if client exists locally before inserting (foreign key constraint)
+                        val clientExists = clientDao.getClientByIdOnce(remoteAppointment.clientId) != null
+                        if (!clientExists) {
+                            Log.w(TAG, "Skipping appointment ${remoteAppointment.id}: client ${remoteAppointment.clientId} not found locally")
+                            continue
+                        }
+
+                        appointmentDao.insert(remoteAppointment)
+                        Log.d(TAG, "Inserted appointment ${remoteAppointment.id}")
+                        // Also pull the appointment horses
                         val horsesResult = appointmentRemoteDataSource.fetchAppointmentHorses(remoteAppointment.id)
                         if (horsesResult.isSuccess) {
                             appointmentDao.insertAppointmentHorses(horsesResult.getOrDefault(emptyList()))
                         }
                         count++
+                    } else if (localAppointment.syncStatus == EntitySyncStatus.SYNCED.name) {
+                        if (remoteAppointment.updatedAt > localAppointment.updatedAt) {
+                            appointmentDao.update(remoteAppointment)
+                            // Update appointment horses
+                            appointmentDao.deleteAppointmentHorses(remoteAppointment.id)
+                            val horsesResult = appointmentRemoteDataSource.fetchAppointmentHorses(remoteAppointment.id)
+                            if (horsesResult.isSuccess) {
+                                appointmentDao.insertAppointmentHorses(horsesResult.getOrDefault(emptyList()))
+                            }
+                            count++
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing appointment ${remoteAppointment.id}: ${e.message}", e)
                 }
             }
+        } else {
+            Log.e(TAG, "Failed to fetch appointments: ${result.exceptionOrNull()?.message}", result.exceptionOrNull())
         }
         return count
     }
