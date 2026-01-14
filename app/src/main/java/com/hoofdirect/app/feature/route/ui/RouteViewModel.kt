@@ -11,7 +11,8 @@ import com.hoofdirect.app.core.route.model.RoutePlan
 import com.hoofdirect.app.core.route.model.RouteSavings
 import com.hoofdirect.app.core.route.model.RouteStats
 import com.hoofdirect.app.core.route.model.RouteStop
-import com.hoofdirect.app.core.subscription.LimitCheckResult
+import com.hoofdirect.app.core.subscription.model.LimitCheckResult
+import com.hoofdirect.app.core.subscription.model.TierLimits
 import com.hoofdirect.app.core.subscription.UsageLimitsManager
 import com.hoofdirect.app.feature.auth.data.TokenManager
 import com.hoofdirect.app.feature.route.data.RoutePlanRepository
@@ -141,13 +142,14 @@ class RouteViewModel @Inject constructor(
      */
     private fun loadTierInfo() {
         viewModelScope.launch {
-            val tierInfo = usageLimitsManager.getTierLimits()
-            val maxStops = tierInfo.maxRouteStopsPerDay
+            val usageSummary = usageLimitsManager.getUsageSummary()
+            val tierLimits = TierLimits.forTier(usageSummary.tier)
+            val maxStops = tierLimits.maxRouteStopsPerDay
 
             _uiState.update {
                 it.copy(
                     tierLimitInfo = TierLimitInfo(
-                        currentTier = tierInfo.tierName,
+                        currentTier = usageSummary.tier.displayName,
                         maxStops = maxStops,
                         isUnlimited = maxStops == Int.MAX_VALUE,
                         canOptimize = maxStops > 0

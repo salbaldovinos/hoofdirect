@@ -65,6 +65,15 @@ interface AppointmentDao {
     suspend fun getAppointmentByIdOnce(id: String): AppointmentEntity?
 
     @Query("""
+        SELECT * FROM appointments
+        WHERE user_id = :userId
+        AND date = :date
+        AND sync_status != 'PENDING_DELETE'
+        ORDER BY start_time ASC
+    """)
+    suspend fun getAppointmentsForDateOnce(userId: String, date: LocalDate): List<AppointmentEntity>
+
+    @Query("""
         SELECT COUNT(*) FROM appointments
         WHERE user_id = :userId
         AND date = :date

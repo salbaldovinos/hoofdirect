@@ -173,7 +173,7 @@ class RoutePlanRepository @Inject constructor(
             client.address,
             client.city,
             client.state,
-            client.zip
+            client.zipCode
         ).filter { it.isNotBlank() }.joinToString(", ")
     }
 

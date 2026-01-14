@@ -10,7 +10,7 @@ import com.hoofdirect.app.core.route.model.RouteSavings
 import com.hoofdirect.app.core.route.model.RouteStats
 import com.hoofdirect.app.core.route.model.RouteStop
 import com.hoofdirect.app.core.route.model.Waypoint
-import com.hoofdirect.app.core.subscription.LimitCheckResult
+import com.hoofdirect.app.core.subscription.model.LimitCheckResult
 import com.hoofdirect.app.core.subscription.UsageLimitsManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
