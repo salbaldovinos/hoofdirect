@@ -108,7 +108,7 @@ class GoogleRoutesService @Inject constructor(
             val request = Request.Builder()
                 .url(baseUrl)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("X-Goog-Api-Key", BuildConfig.GOOGLE_MAPS_API_KEY)
+                .addHeader("X-Goog-Api-Key", BuildConfig.GOOGLE_ROUTES_API_KEY)
                 .addHeader(
                     "X-Goog-FieldMask",
                     "routes.optimizedIntermediateWaypointIndex," +
@@ -236,7 +236,7 @@ class GoogleRoutesService @Inject constructor(
             val request = Request.Builder()
                 .url(baseUrl)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("X-Goog-Api-Key", BuildConfig.GOOGLE_MAPS_API_KEY)
+                .addHeader("X-Goog-Api-Key", BuildConfig.GOOGLE_ROUTES_API_KEY)
                 .addHeader(
                     "X-Goog-FieldMask",
                     "routes.legs.duration," +

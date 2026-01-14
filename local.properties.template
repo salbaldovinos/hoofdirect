@@ -3,8 +3,19 @@
 # DO NOT commit local.properties to version control
 
 # Supabase Configuration
+# Get these from: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key-here
 
-# Google Maps API Key
+# Google Maps API Key (Android)
+# Used for: Maps SDK, Places API, Geocoding API
+# Create at: https://console.cloud.google.com/apis/credentials
+# Restrict to: Android apps (com.hoofdirect.app, com.hoofdirect.app.debug)
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
+
+# Google Routes API Key
+# Used for: Route optimization (waypoint reordering)
+# Create at: https://console.cloud.google.com/apis/credentials
+# Restrict to: Routes API only
+# Note: If using the same key for both, you can omit this and it will fall back to GOOGLE_MAPS_API_KEY
+GOOGLE_ROUTES_API_KEY=your-google-routes-api-key-here
