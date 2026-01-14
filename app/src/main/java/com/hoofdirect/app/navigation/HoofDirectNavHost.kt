@@ -35,9 +35,19 @@ fun HoofDirectNavHost(
     var isOnboardingComplete by remember { mutableStateOf<Boolean?>(null) }
 
     // Check onboarding status on first composition
-    LaunchedEffect(authState.isAuthenticated) {
+    // For existing users with completed profiles, auto-complete onboarding
+    LaunchedEffect(authState.isAuthenticated, authState.hasCompletedProfile) {
         if (authState.isAuthenticated) {
-            isOnboardingComplete = onboardingPreferencesManager.isOnboardingComplete.first()
+            val onboardingDone = onboardingPreferencesManager.isOnboardingComplete.first()
+
+            // If user has completed their profile but hasn't done the new onboarding,
+            // auto-mark it as complete (they're an existing user who set up before onboarding existed)
+            if (!onboardingDone && authState.hasCompletedProfile) {
+                onboardingPreferencesManager.setOnboardingComplete()
+                isOnboardingComplete = true
+            } else {
+                isOnboardingComplete = onboardingDone
+            }
         }
     }
 

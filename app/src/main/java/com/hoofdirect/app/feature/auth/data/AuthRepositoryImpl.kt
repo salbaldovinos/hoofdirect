@@ -110,8 +110,8 @@ class AuthRepositoryImpl @Inject constructor(
                     tokenManager.saveCredentialsForBiometric(email, password)
                 }
 
-                // Create or update local user
-                val user = createUserFromInfo(userInfo)
+                // Try to load existing profile from Supabase or local cache
+                val user = loadOrCreateUser(userInfo)
                 userDao.insertUser(user.toEntity())
 
                 Result.success(user)
@@ -298,6 +298,61 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun hasValidSession(): Boolean {
         return tokenManager.getAccessToken() != null && !tokenManager.isTokenExpired()
+    }
+
+    /**
+     * Load existing user profile from Supabase or local cache, or create new if doesn't exist.
+     * This preserves profile data for existing users during sign-in.
+     */
+    private suspend fun loadOrCreateUser(userInfo: UserInfo): User {
+        // First, try to fetch from Supabase profiles table
+        try {
+            val profiles = supabaseClient.postgrest["profiles"]
+                .select {
+                    filter {
+                        eq("id", userInfo.id)
+                    }
+                }
+                .decodeList<ProfileDto>()
+
+            if (profiles.isNotEmpty()) {
+                val profile = profiles.first()
+                return User(
+                    id = profile.id,
+                    email = profile.email ?: userInfo.email ?: "",
+                    emailVerified = userInfo.emailConfirmedAt != null,
+                    businessName = profile.business_name,
+                    phone = profile.phone,
+                    address = profile.address,
+                    homeLatitude = profile.home_latitude,
+                    homeLongitude = profile.home_longitude,
+                    serviceRadiusMiles = profile.service_radius_miles,
+                    defaultDurationMinutes = profile.default_duration_minutes,
+                    defaultCycleWeeks = profile.default_cycle_weeks,
+                    subscriptionTier = profile.subscription_tier,
+                    profilePhotoUrl = profile.profile_photo_url,
+                    profileCompleted = profile.profile_completed
+                )
+            }
+        } catch (e: Exception) {
+            // Supabase fetch failed, try local cache
+        }
+
+        // Fall back to local cache
+        val cachedUser = userDao.getUserByIdOnce(userInfo.id)
+        if (cachedUser != null) {
+            // Preserve existing profile data, just update auth-related fields
+            return User.fromEntity(cachedUser).copy(
+                emailVerified = userInfo.emailConfirmedAt != null
+            )
+        }
+
+        // No existing profile found - create new bare-bones user
+        return User(
+            id = userInfo.id,
+            email = userInfo.email ?: "",
+            emailVerified = userInfo.emailConfirmedAt != null
+        )
     }
 
     private fun createUserFromInfo(userInfo: UserInfo): User {
