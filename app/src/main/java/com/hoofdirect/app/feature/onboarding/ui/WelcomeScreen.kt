@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -96,10 +98,10 @@ fun WelcomeScreen(
 private fun HeroIllustration(
     modifier: Modifier = Modifier
 ) {
-    // Placeholder for actual horseshoe illustration
-    // In production, this would be an Image composable with the actual asset
+    // Placeholder icon - replace with actual horseshoe logo asset
+    // TODO: Add horseshoe drawable resource (res/drawable/ic_horseshoe.xml)
     Icon(
-        imageVector = HorseshoeIcon,
+        imageVector = Icons.Outlined.Verified,
         contentDescription = "Hoof Direct Logo",
         modifier = modifier.size(120.dp),
         tint = MaterialTheme.colorScheme.primary
@@ -113,7 +115,7 @@ private fun FeatureHighlight(
     description: String,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
@@ -125,7 +127,7 @@ private fun FeatureHighlight(
             tint = MaterialTheme.colorScheme.primary
         )
 
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(horizontal = 12.dp))
+        Spacer(modifier = Modifier.padding(horizontal = 12.dp))
 
         Column {
             Text(
@@ -141,49 +143,3 @@ private fun FeatureHighlight(
         }
     }
 }
-
-// Custom horseshoe icon using vector paths
-private val HorseshoeIcon: androidx.compose.ui.graphics.vector.ImageVector
-    get() {
-        return androidx.compose.ui.graphics.vector.ImageVector.Builder(
-            name = "Horseshoe",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            androidx.compose.ui.graphics.vector.path(
-                fill = androidx.compose.ui.graphics.SolidColor(androidx.compose.ui.graphics.Color.Black),
-                stroke = null,
-                strokeLineWidth = 0f
-            ) {
-                // Simplified horseshoe shape
-                moveTo(12f, 2f)
-                curveTo(7.03f, 2f, 3f, 6.03f, 3f, 11f)
-                lineTo(3f, 20f)
-                lineTo(6f, 20f)
-                lineTo(6f, 11f)
-                curveTo(6f, 7.69f, 8.69f, 5f, 12f, 5f)
-                curveTo(15.31f, 5f, 18f, 7.69f, 18f, 11f)
-                lineTo(18f, 20f)
-                lineTo(21f, 20f)
-                lineTo(21f, 11f)
-                curveTo(21f, 6.03f, 16.97f, 2f, 12f, 2f)
-                close()
-                // Left nail hole
-                moveTo(4.5f, 14f)
-                curveTo(4.5f, 14.83f, 5.17f, 15.5f, 6f, 15.5f)
-                curveTo(6.83f, 15.5f, 7.5f, 14.83f, 7.5f, 14f)
-                curveTo(7.5f, 13.17f, 6.83f, 12.5f, 6f, 12.5f)
-                curveTo(5.17f, 12.5f, 4.5f, 13.17f, 4.5f, 14f)
-                close()
-                // Right nail hole
-                moveTo(16.5f, 14f)
-                curveTo(16.5f, 14.83f, 17.17f, 15.5f, 18f, 15.5f)
-                curveTo(18.83f, 15.5f, 19.5f, 14.83f, 19.5f, 14f)
-                curveTo(19.5f, 13.17f, 18.83f, 12.5f, 18f, 12.5f)
-                curveTo(17.17f, 12.5f, 16.5f, 13.17f, 16.5f, 14f)
-                close()
-            }
-        }.build()
-    }
