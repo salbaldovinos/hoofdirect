@@ -110,6 +110,10 @@ class AuthRepositoryImpl @Inject constructor(
                     tokenManager.saveCredentialsForBiometric(email, password)
                 }
 
+                // Clear any other user's cached data (if a different user signs in)
+                // This preserves the current user's cached profile data
+                userDao.deleteUsersExcept(userInfo.id)
+
                 // Try to load existing profile from Supabase or local cache
                 val user = loadOrCreateUser(userInfo)
                 userDao.insertUser(user.toEntity())
@@ -170,13 +174,14 @@ class AuthRepositoryImpl @Inject constructor(
             if (networkMonitor.isCurrentlyOnline()) {
                 auth.signOut()
             }
+            // Only clear auth tokens, NOT user data
+            // User data is preserved so if the same user signs back in,
+            // their profile data is still cached locally
             tokenManager.clearAll()
-            userDao.deleteAllUsers()
             Result.success(Unit)
         } catch (e: Exception) {
-            // Still clear local data even if remote signout fails
+            // Still clear tokens even if remote signout fails
             tokenManager.clearAll()
-            userDao.deleteAllUsers()
             Result.success(Unit)
         }
     }
