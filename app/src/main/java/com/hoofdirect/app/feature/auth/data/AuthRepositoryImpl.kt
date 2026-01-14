@@ -12,6 +12,9 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import java.time.Instant
@@ -65,10 +68,13 @@ class AuthRepositoryImpl @Inject constructor(
 
     private val auth: Auth get() = supabaseClient.auth
 
+    // Track auth state explicitly - initialized based on whether we have a valid session
+    private val _isAuthenticated = MutableStateFlow(hasValidSession())
+
     override val currentUser: Flow<User?> = userDao.getCurrentUser()
         .map { entity -> entity?.let { User.fromEntity(it) } }
 
-    override val isAuthenticated: Flow<Boolean> = currentUser.map { it != null }
+    override val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
 
     override suspend fun signIn(email: String, password: String): Result<User> {
         return try {
@@ -81,6 +87,7 @@ class AuthRepositoryImpl @Inject constructor(
                     if (userId != null) {
                         val cachedUser = userDao.getUserByIdOnce(userId)
                         if (cachedUser != null) {
+                            _isAuthenticated.value = true
                             return Result.success(User.fromEntity(cachedUser))
                         }
                     }
@@ -117,6 +124,9 @@ class AuthRepositoryImpl @Inject constructor(
                 // Try to load existing profile from Supabase or local cache
                 val user = loadOrCreateUser(userInfo)
                 userDao.insertUser(user.toEntity())
+
+                // Update auth state
+                _isAuthenticated.value = true
 
                 Result.success(user)
             } else {
@@ -160,6 +170,9 @@ class AuthRepositoryImpl @Inject constructor(
                 )
                 userDao.insertUser(user.toEntity())
 
+                // Update auth state
+                _isAuthenticated.value = true
+
                 Result.success(user)
             } else {
                 Result.failure(AuthError.Unknown("Sign up failed"))
@@ -178,10 +191,13 @@ class AuthRepositoryImpl @Inject constructor(
             // User data is preserved so if the same user signs back in,
             // their profile data is still cached locally
             tokenManager.clearAll()
+            // Update auth state
+            _isAuthenticated.value = false
             Result.success(Unit)
         } catch (e: Exception) {
             // Still clear tokens even if remote signout fails
             tokenManager.clearAll()
+            _isAuthenticated.value = false
             Result.success(Unit)
         }
     }
